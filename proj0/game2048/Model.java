@@ -5,7 +5,7 @@ import java.util.Observable;
 
 
 /** The state of a game of 2048.
- *  @author TODO: YOUR NAME HERE
+ *  @author blueofflaner
  */
 public class Model extends Observable {
     /** Current contents of the board. */
@@ -137,7 +137,14 @@ public class Model extends Observable {
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
-        // TODO: Fill in this function.
+        for (int col = 0; col < b.size(); col++) {
+            for (int row = 0; row < b.size(); row++) {
+                Tile tile = b.tile(col, row);
+                if (tile == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -147,7 +154,14 @@ public class Model extends Observable {
      * given a Tile object t, we get its value with t.value().
      */
     public static boolean maxTileExists(Board b) {
-        // TODO: Fill in this function.
+        for (int col = 0; col < b.size(); col++) {
+            for (int row = 0; row < b.size(); row++) {
+                Tile tile = b.tile(col, row);
+                if (tile != null && tile.value() == MAX_PIECE) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -158,13 +172,42 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
+        return emptySpaceExists(b) || canMergedTilesExists(b);
+    }
+
+    /**
+    * Returns true if there are two adjacent tiles with the same value.
+    */
+    private static boolean canMergedTilesExists(Board b) {
+        for (Side s : Side.values()) {
+            b.setViewingPerspective(s);
+            for (int col = 0; col < b.size(); col++) {
+                for (int row = 0; row < b.size() - 1; row++) {
+                    Tile tile1 = b.tile(col, row);
+                    if (tile1 == null) {
+                        continue;
+                    }
+                    while (row < b.size() - 1) {
+                        Tile tile2 = b.tile(col, row + 1);
+                        if (tile2 == null) {
+                            row++;
+                            continue;
+                        }
+                        if (tile1.value() == tile2.value()) {
+                            return true;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
         return false;
     }
 
 
     @Override
-     /** Returns the model as a string, used for debugging. */
+    /** Returns the model as a string, used for debugging. */
     public String toString() {
         Formatter out = new Formatter();
         out.format("%n[%n");
