@@ -113,6 +113,61 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        board.setViewingPerspective(side);
+        for (int col = 0; col < board.size(); col++) {
+            int emptyRowSpace = board.size();
+            for (int row = board.size() - 1; row >= 0; row--) {
+                Tile tile1 = board.tile(col, row);
+                int rowOfTile1 = row;
+                if (tile1 == null) {
+                    if (emptyRowSpace == board.size()) {
+                        emptyRowSpace = board.size() - 1;
+                    }
+                    continue;
+                }
+                if (emptyRowSpace != board.size()) {
+                    if (!board.move(col, emptyRowSpace, tile1)) {
+                        rowOfTile1 = emptyRowSpace;
+                        emptyRowSpace--;
+                        changed = true;
+                    }
+                }
+                while (row > 0) {
+                    Tile tile2 = board.tile(col, row - 1);
+                    int rowOfTile2 = row - 1;
+                    if (tile2 == null) {
+                        if (emptyRowSpace == board.size()) {
+                            emptyRowSpace = row - 1;
+                        }
+                        row--;
+                        continue;
+                    }
+                    if (tile1.value() == tile2.value()) {
+                        if (board.move(col, rowOfTile1, tile2)) {
+                            changed = true;
+                            score += tile1.value() << 1;
+                            if (emptyRowSpace == board.size()) {
+                                emptyRowSpace = rowOfTile2;
+                            }
+                        }
+                    } else {
+                        if (emptyRowSpace == board.size()) {
+                            break;
+                        }
+                        if (!board.move(col, emptyRowSpace, tile2)) {
+                            changed = true;
+                            tile1 = tile2;
+                            rowOfTile1 = emptyRowSpace;
+                            emptyRowSpace--;
+                            row--;
+                            continue;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        board.setViewingPerspective(Side.NORTH);
 
         checkGameOver();
         if (changed) {
