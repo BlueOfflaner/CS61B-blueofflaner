@@ -20,7 +20,7 @@ public class LinkedListDequeTest {
 
         LinkedListDeque<String> lld1 = new LinkedListDeque<String>();
 
-		assertTrue("A newly initialized LLDeque should be empty", lld1.isEmpty());
+        assertTrue("A newly initialized LLDeque should be empty", lld1.isEmpty());
 		lld1.addFirst("front");
 
 		// The && operator is the same as "and" in Python.

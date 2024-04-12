@@ -1,9 +1,5 @@
 package gh2;
 
-// TODO: uncomment the following import once you're ready to start this portion
-// import deque.Deque;
-// TODO: maybe more imports
-
 import deque.ArrayDeque;
 import deque.Deque;
 
@@ -16,7 +12,6 @@ public class GuitarString {
     private static final double DECAY = .996; // energy decay factor
 
     /* Buffer for storing sound data. */
-    // TODO: uncomment the following line once you're ready to start this portion
      private Deque<Double> buffer;
 
      int capacity;
@@ -57,4 +52,3 @@ public class GuitarString {
         return buffer.get(0);
     }
 }
-    // TODO: Remove all comments that say TODO when you're done.

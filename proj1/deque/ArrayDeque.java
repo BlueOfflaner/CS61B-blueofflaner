@@ -122,8 +122,7 @@ public class ArrayDeque<T> implements Deque<T> {
         Object[] newArray = new Object[newCapacity];
         if (head <= tail) {
             System.arraycopy(oldArray, head, newArray, 0, size);
-        }
-        else {
+        } else {
             int headSectionSize = oldArray.length - head;
             int tailSectionSize = size - headSectionSize;
             System.arraycopy(oldArray, head, newArray, 0, headSectionSize);
@@ -139,17 +138,23 @@ public class ArrayDeque<T> implements Deque<T> {
     }
 
     private class ArrayDequeIterator<T> implements Iterator<T> {
-        int cur = head;
+        private int index;
 
+        ArrayDequeIterator() {
+            index = 0;
+        }
         @Override
         public boolean hasNext() {
-            return cur != tail;
+            return index < size;
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public T next() {
             if (hasNext()) {
-                cur = (cur + 1) % elements.length;
+                T item = (T) get(index);
+                index += 1;
+                return item;
             }
             return null;
         }
@@ -157,7 +162,7 @@ public class ArrayDeque<T> implements Deque<T> {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("");
         for (int i = 0; i < size; i++) {
             sb.append(get(i % elements.length)).append(" ");
         }

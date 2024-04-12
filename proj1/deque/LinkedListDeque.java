@@ -135,7 +135,7 @@ public class LinkedListDeque<T> implements Deque<T> {
         Node prev;
         Node next;
 
-        Node() {}
+        Node() { }
         Node(T data) {
             this.data = data;
         }

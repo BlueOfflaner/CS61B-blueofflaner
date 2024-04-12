@@ -6,8 +6,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Iterator;
-
 import org.junit.Test;
 
 import edu.princeton.cs.algs4.StdRandom;
