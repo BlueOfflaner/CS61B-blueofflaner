@@ -1,7 +1,6 @@
 package deque;
 
 import java.util.Comparator;
-import java.util.Deque;
 
 /**
  * @author blueofflaner <blueofflaner@gmail.com>
