@@ -6,6 +6,7 @@ import java.util.Iterator;
  * @author blueofflaner <blueofflaner@gmail.com>
  * Created on 2024-04-09
  */
+@SuppressWarnings("unchecked")
 public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
     public LinkedListDeque() {
