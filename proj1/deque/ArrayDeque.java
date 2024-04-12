@@ -1,6 +1,5 @@
 package deque;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
 
@@ -62,6 +61,7 @@ public class ArrayDeque<T> implements Deque<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public T removeFirst() {
         if (isEmpty()) {
             return null;
@@ -81,6 +81,7 @@ public class ArrayDeque<T> implements Deque<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public T removeLast() {
         if (isEmpty()) {
             return null;
@@ -100,6 +101,7 @@ public class ArrayDeque<T> implements Deque<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public T get(int index) {
         if (index < 0 || index >= elements.length || isEmpty()) {
             return null;
@@ -148,7 +150,7 @@ public class ArrayDeque<T> implements Deque<T> {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("");
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < size; i++) {
             sb.append(get(i % elements.length)).append(" ");
         }
@@ -165,8 +167,6 @@ public class ArrayDeque<T> implements Deque<T> {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(size, head, tail);
-        result = 31 * result + Arrays.hashCode(elements);
-        return result;
+        return Objects.hash(size, get(head), tail == -1 ? null : get(tail));
     }
 }
