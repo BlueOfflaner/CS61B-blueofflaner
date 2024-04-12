@@ -112,11 +112,7 @@ public class ArrayDeque<T> implements Deque<T> {
         int oldCapacity = oldArray == null ? 0 : elements.length;
         Object[] newArray = new Object[newCapacity];
         if (head <= tail) {
-            try {
-                System.arraycopy(oldArray, head, newArray, 0, size);
-            } catch (Exception e) {
-                System.out.println(e);
-            }
+            System.arraycopy(oldArray, head, newArray, 0, size);
         }
         else {
             int headSectionSize = oldArray.length - head;
