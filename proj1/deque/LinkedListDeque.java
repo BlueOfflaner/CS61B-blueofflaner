@@ -1,13 +1,12 @@
 package deque;
 
 import java.util.Iterator;
-import java.util.Objects;
 
 /**
  * @author blueofflaner <blueofflaner@gmail.com>
  * Created on 2024-04-09
  */
-public class LinkedListDeque<T> implements Deque<T> {
+public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
     public LinkedListDeque() {
         head = new Node<T>();
@@ -79,7 +78,7 @@ public class LinkedListDeque<T> implements Deque<T> {
         return (T) recursiveTraversal(head.next, 0, index);
     }
 
-    public T recursiveTraversal(Node<T> cur, int count, int target) {
+    private T recursiveTraversal(Node<T> cur, int count, int target) {
         if (cur == tail) {
             return null;
         }
@@ -105,26 +104,16 @@ public class LinkedListDeque<T> implements Deque<T> {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof Deque) {
-            return toString().equals(o.toString());
+        if (!(o instanceof Deque)) {
+            return false;
         }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(size, head.next.data, tail.prev.data);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder("");
-        Node<T> cur = head.next;
-        while (cur != tail) {
-            sb.append(cur.data).append(" ");
-            cur = cur.next;
+        Deque<T> deque = (Deque<T>) o;
+        for (int i = 0; i < size; i++) {
+            if (deque.get(i).equals(get(i))) {
+                return false;
+            }
         }
-        return sb.toString();
+        return true;
     }
 
     private Node head;

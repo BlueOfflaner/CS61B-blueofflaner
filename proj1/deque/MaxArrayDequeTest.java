@@ -1,6 +1,7 @@
 package deque;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.util.Comparator;
 
@@ -14,7 +15,7 @@ public class MaxArrayDequeTest {
     @Test
     public void maxWithoutComparatorTest() {
         MaxArrayDeque<Integer> mad = new MaxArrayDeque<>(new IntComparator());
-
+        assertNull(mad.max());
         for (int i = 0; i < 5; i++) {
             mad.addLast(i);
         }

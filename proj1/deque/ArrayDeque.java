@@ -1,13 +1,12 @@
 package deque;
 
 import java.util.Iterator;
-import java.util.Objects;
 
 /**
  * @author blueofflaner <blueofflaner@gmail.com>
  * Created on 2024-04-09
  */
-public class ArrayDeque<T> implements Deque<T> {
+public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     private static final int DEFAULT_CAPACITY = 8;
     private final Object[] DEFAULT_CAPACITY_EMPTY_ELEMENTS = new Object[DEFAULT_CAPACITY];
@@ -19,13 +18,6 @@ public class ArrayDeque<T> implements Deque<T> {
 
     public ArrayDeque() {
         elements = DEFAULT_CAPACITY_EMPTY_ELEMENTS;
-        size = 0;
-        head = 0;
-        tail = -1;
-    }
-
-    public ArrayDeque(int initialCapacity) {
-        elements = new Object[initialCapacity];
         size = 0;
         head = 0;
         tail = -1;
@@ -116,7 +108,7 @@ public class ArrayDeque<T> implements Deque<T> {
         return (T) elements[(index + head) % elements.length];
     }
 
-    void resize(int newCapacity) {
+    private void resize(int newCapacity) {
         Object[] oldArray = elements;
         int oldCapacity = oldArray == null ? 0 : elements.length;
         Object[] newArray = new Object[newCapacity];
@@ -161,24 +153,16 @@ public class ArrayDeque<T> implements Deque<T> {
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder("");
-        for (int i = 0; i < size; i++) {
-            sb.append(get(i % elements.length)).append(" ");
-        }
-        return sb.toString();
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (!(o instanceof Deque)) {
             return false;
         }
-        return toString().equals(o.toString());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(size, get(head), tail == -1 ? null : get(tail));
+        Deque<T> deque = (Deque<T>) o;
+        for (int i = 0; i < size; i++) {
+            if (deque.get(i).equals(get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 }

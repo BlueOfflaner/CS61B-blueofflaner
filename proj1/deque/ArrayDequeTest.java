@@ -335,13 +335,15 @@ public class ArrayDequeTest {
     @Test
     public void nullTest() {
         ArrayDeque<Integer> arrayDeque = new ArrayDeque<>();
+        LinkedListDeque<Integer> linkedListDeque = new LinkedListDeque<>();
+        assertEquals(arrayDeque, linkedListDeque);
+
         arrayDeque.addFirst(66);
         arrayDeque.addLast(98);
         System.out.println(arrayDeque);
-
-        LinkedListDeque<Integer> linkedListDeque = new LinkedListDeque<>();
         linkedListDeque.addFirst(66);
         linkedListDeque.addLast(98);
         System.out.println(linkedListDeque.get(1));
+        assertEquals(arrayDeque, linkedListDeque);
     }
 }

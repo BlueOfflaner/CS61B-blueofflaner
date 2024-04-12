@@ -2,7 +2,6 @@ package deque;
 
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.Objects;
 
 /**
  * @author blueofflaner <blueofflaner@gmail.com>
@@ -42,10 +41,5 @@ public class MaxArrayDeque<T> extends ArrayDeque<T> {
             return super.equals(o) && comparator.equals(((MaxArrayDeque<?>) o).comparator);
         }
         return super.equals(o);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode());
     }
 }
