@@ -18,12 +18,12 @@ public class GuitarHeroFull {
             GUITAR_STRINGS[i] = new GuitarString(CONCERT[i]);
         }
     }
-    private static final String keyboard = "q2we4r5ty7u8i9op-[=zxdcfvgbnjmk,.;/' ";
+    private static final String KEYBOARD = "q2we4r5ty7u8i9op-[=zxdcfvgbnjmk,.;/' ";
     public static void main(String[] args) {
         while (true) {
             if (StdDraw.hasNextKeyTyped()) {
                 char key = StdDraw.nextKeyTyped();
-                int index = keyboard.indexOf(key);
+                int index = KEYBOARD.indexOf(key);
                 if (index == -1) {
                     continue;
                 }

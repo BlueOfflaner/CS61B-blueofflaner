@@ -9,7 +9,7 @@ import java.util.Iterator;
 public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     private static final int DEFAULT_CAPACITY = 8;
-    private static final Object[] DEFAULT_CAPACITY_EMPTY_ELEMENTS = new Object[DEFAULT_CAPACITY];
+    private final Object[] DEFAULT_CAPACITY_EMPTY_ELEMENTS = new Object[DEFAULT_CAPACITY];
     private static final double FACTOR = 0.25;
     private Object[] elements;
     private int size;
