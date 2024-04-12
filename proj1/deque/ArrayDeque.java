@@ -159,7 +159,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         }
         Deque<T> deque = (Deque<T>) o;
         for (int i = 0; i < size; i++) {
-            if (deque.get(i).equals(get(i))) {
+            if (!deque.get(i).equals(get(i))) {
                 return false;
             }
         }
