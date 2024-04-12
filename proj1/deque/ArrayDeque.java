@@ -24,6 +24,13 @@ public class ArrayDeque<T> implements Deque<T> {
         tail = -1;
     }
 
+    public ArrayDeque(int initialCapacity) {
+        elements = new Object[initialCapacity];
+        size = 0;
+        head = 0;
+        tail = -1;
+    }
+
     @Override
     public void addFirst(T item) {
         if (size == elements.length) {
