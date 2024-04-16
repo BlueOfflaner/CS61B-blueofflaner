@@ -7,11 +7,11 @@ import java.util.Set;
  * @author blueofflaner <blueofflaner@gmail.com>
  * Created on 2024-04-16
  */
-public class BSTMap<K extends Comparable, V> implements Map61B {
+public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
-    BSTNode root;
+    private BSTNode root;
 
-    int size;
+    private int size;
 
     @Override
     public void clear() {
@@ -20,15 +20,13 @@ public class BSTMap<K extends Comparable, V> implements Map61B {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public boolean containsKey(Object key) {
-        return searchNode(root, (K) key) != null;
+    public boolean containsKey(K key) {
+        return searchNode(root, key) != null;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Object get(Object key) {
-        BSTNode res = searchNode(root, (K) key);
+    public V get(K key) {
+        BSTNode res = searchNode(root, key);
         return res == null ? null : res.val;
     }
 
@@ -51,9 +49,8 @@ public class BSTMap<K extends Comparable, V> implements Map61B {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public void put(Object key, Object value) {
-        root = addNode(root, (K) key, (V) value);
+    public void put(K key, V value) {
+        root = addNode(root, key, value);
     }
 
     private BSTNode addNode(BSTNode cur, K key, V value) {
@@ -70,22 +67,22 @@ public class BSTMap<K extends Comparable, V> implements Map61B {
     }
 
     @Override
-    public Set keySet() {
+    public Set<K> keySet() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Object remove(Object key) {
+    public V remove(K key) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Object remove(Object key, Object value) {
+    public V remove(K key, V value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Iterator iterator() {
+    public Iterator<K> iterator() {
         throw new UnsupportedOperationException();
     }
 
