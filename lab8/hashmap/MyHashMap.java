@@ -140,7 +140,7 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
         buckets = nBuckets;
     }
 
-    public Node getNode(K key) {
+    private Node getNode(K key) {
         int pos = getKeyPos(key);
         for (Node node : buckets[pos]) {
             if (node.key.equals(key)) {
