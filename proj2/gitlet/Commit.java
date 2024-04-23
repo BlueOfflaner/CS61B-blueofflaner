@@ -2,28 +2,31 @@ package gitlet;
 
 // TODO: any imports you need here
 
+import static gitlet.MyUtils.generatorId;
+import static gitlet.MyUtils.getObjectFile;
+import static gitlet.MyUtils.saveObjectFile;
+import static gitlet.Utils.readObject;
+
 import java.io.File;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date; // TODO: You'll likely use this in this class
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import static gitlet.Utils.*;
-import static gitlet.MyUtils.*;
-
-/** Represents a gitlet commit object.
+/**
+ * Represents a gitlet commit object.
  *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- *  @author TODO
+ * @author TODO
  */
 public class Commit implements Serializable {
     /**
      * TODO: add instance variables here.
-     *
+     * <p>
      * List all instance variables of the Commit class here with a useful
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided one example for `message`.
@@ -31,7 +34,9 @@ public class Commit implements Serializable {
 
     private String id;
     private Date date;
-    /** The message of this Commit. */
+    /**
+     * The message of this Commit.
+     */
     private String message;
     private File file;
     private Map<String, String> tracked;

@@ -1,15 +1,20 @@
 package gitlet;
 
+import static gitlet.FailureMessage.COMMIT_NO_MESSAGE;
+import static gitlet.FailureMessage.EMPTY_COMMAND;
+import static gitlet.FailureMessage.INVAlID_ARGS;
 import static gitlet.MyUtils.exit;
-import static gitlet.FailureMessage.*;
 
-/** Driver class for Gitlet, a subset of the Git version-control system.
- *  @author TODO
+/**
+ * Driver class for Gitlet, a subset of the Git version-control system.
+ *
+ * @author TODO
  */
 public class Main {
 
-    /** Usage: java gitlet.Main ARGS, where ARGS contains
-     *  <COMMAND> <OPERAND1> <OPERAND2> ... 
+    /**
+     * Usage: java gitlet.Main ARGS, where ARGS contains
+     * <COMMAND> <OPERAND1> <OPERAND2> ...
      */
     public static void main(String[] args) {
         if (args.length == 0) {
@@ -17,7 +22,7 @@ public class Main {
         }
 
         String firstArg = args[0];
-        switch(firstArg) {
+        switch (firstArg) {
             case "init": {
                 validateNumArgs(args, 1);
                 Repository.init();

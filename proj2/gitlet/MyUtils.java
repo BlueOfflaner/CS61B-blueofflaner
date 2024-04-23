@@ -1,6 +1,9 @@
 package gitlet;
 
-import static gitlet.Utils.*;
+import static gitlet.Utils.join;
+import static gitlet.Utils.message;
+import static gitlet.Utils.sha1;
+import static gitlet.Utils.writeObject;
 
 import java.io.File;
 import java.io.Serializable;
@@ -10,7 +13,7 @@ import java.io.Serializable;
  * Created on 2024-04-19
  */
 public class MyUtils {
-    
+
     static void exit(FailureMessage msg, Object... args) {
         exit(msg.msg, args);
     }

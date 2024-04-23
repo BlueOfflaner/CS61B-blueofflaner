@@ -21,6 +21,7 @@ public enum FailureMessage {
     CHECKOUT_UNTRACKED_FILE_EXIST("There is an untracked file in the way; delete it, or add and commit it first.");
 
     String msg;
+
     FailureMessage(String s) {
         this.msg = s;
     }

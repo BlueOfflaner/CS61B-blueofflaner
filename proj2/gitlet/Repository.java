@@ -1,5 +1,14 @@
 package gitlet;
 
+import static gitlet.MyUtils.exit;
+import static gitlet.MyUtils.generatorId;
+import static gitlet.MyUtils.removeFile;
+import static gitlet.Utils.join;
+import static gitlet.Utils.plainFilenamesIn;
+import static gitlet.Utils.readContentsAsString;
+import static gitlet.Utils.readObject;
+import static gitlet.Utils.writeContents;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,9 +24,6 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-
-import static gitlet.Utils.*;
-import static gitlet.MyUtils.*;
 
 // TODO: any imports you need here
 
@@ -185,10 +191,10 @@ public class Repository {
 
     public static void checkout(String commitId, String fileName) {
         //TODO complete checkout
-        Commit commit = commitId == null ? getHeadCommit() : Commit.fromFile(commitId);
-
-
-
+        Commit commit = commitId == null ? getHeadCommit() : Commit.fromFile(getRealCommitId(commitId));
+        if (commit == null) {
+            exit(FailureMessage.CHECKOUT_COMMIT_NOT_EXIST);
+        }
         if (fileName == null) {
             StagingArea stagingArea = getStagingArea();
             stagingArea.clear();
@@ -201,7 +207,23 @@ public class Repository {
                 Blob blob = Blob.fromFile(blobId);
                 writeContents(blob.getFile(), blob.getContents());
             }
+            return;
         }
+        assert commit != null;
+        File file = getFileFromCWD(fileName);
+        removeFile(file);
+        if (!commit.getTracked().containsKey(file.getPath())) {
+            exit(FailureMessage.CHECKOUT_FILE_NOT_EXIST);
+        } else {
+            String blobId = commit.getTracked().get(file.getPath());
+            Blob blob = Blob.fromFile(blobId);
+            writeContents(blob.getFile(), blob.getContents());
+        }
+    }
+
+    //TODO deal with commitId length
+    private static String getRealCommitId(String commitId) {
+        return commitId;
     }
 
     public static void checkWorkingDir() {
@@ -286,6 +308,7 @@ public class Repository {
         }
         return files;
     }
+
     //TODO 可能有 bug，等待测试
     private static Map<String, String> getFileMapFromCWD() {
         Map<String, String> map = new TreeMap<>();

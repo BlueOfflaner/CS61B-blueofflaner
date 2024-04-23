@@ -1,9 +1,13 @@
 package gitlet;
 
+import static gitlet.MyUtils.generatorId;
+import static gitlet.MyUtils.getObjectFile;
+import static gitlet.MyUtils.saveObjectFile;
+import static gitlet.Utils.readContents;
+import static gitlet.Utils.readObject;
+
 import java.io.File;
 import java.io.Serializable;
-import static gitlet.MyUtils.*;
-import static gitlet.Utils.*;
 
 public class Blob implements Serializable {
     private String id;
