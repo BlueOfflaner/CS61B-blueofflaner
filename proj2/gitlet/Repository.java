@@ -175,6 +175,32 @@ public class Repository {
         System.out.print(sb);
     }
 
+    public static void status() {
+        //TODO complete status
+    }
+
+    public static void branch(String branchName) {
+        List<String> branchHeads = plainFilenamesIn(BRANCH_HEADS_DIR);
+        assert branchHeads != null;
+        if (branchHeads.contains(branchName)) {
+            exit(FailureMessage.BRANCH_ALREADY_EXIST);
+        }
+        setBranchHeadCommit(branchName, getHeadCommit().getId());
+    }
+
+    public static void rmBranch(String branchName) {
+        if (getCurrentBranch().equals(branchName)) {
+            exit(FailureMessage.REMOVE_BRANCH_CAN_NOT_REMOVE_CURRENT_BRANCH);
+        }
+        List<String> branchHeads = plainFilenamesIn(BRANCH_HEADS_DIR);
+        assert branchHeads != null;
+        if (!branchHeads.contains(branchName)) {
+            exit(FailureMessage.REMOVE_BRANCH_NOT_EXIST);
+        }
+        File branchHead = getBranchHead(branchName);
+        removeFile(branchHead);
+    }
+
     public static void checkout(String branchName) {
         File branchHead = getBranchHead(branchName);
         if (!branchHead.exists()) {
@@ -220,6 +246,13 @@ public class Repository {
             Blob blob = Blob.fromFile(blobId);
             writeContents(blob.getFile(), blob.getContents());
         }
+    }
+
+    public static void reset(String commitId) {
+        Commit commit = Commit.fromFile(getRealCommitId(commitId));
+        checkUntrackedFile(commit);
+        checkout(commitId, null);
+        setBranchHeadCommit(getCurrentBranch(), commitId);
     }
 
     //TODO deal with commitId length

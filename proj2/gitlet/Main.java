@@ -76,6 +76,25 @@ public class Main {
                 Repository.find(message);
                 break;
             }
+            case "status": {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 1);
+                Repository.status();
+                break;
+            }
+            case "branch": {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 2);
+                String branchName = args[1];
+                Repository.branch(branchName);
+                break;
+            }
+            case "rm-branch": {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 2);
+                String branchName = args[1];
+                Repository.rmBranch(branchName);
+            }
             case "checkout": {
                 Repository.checkWorkingDir();
                 switch (args.length) {
@@ -106,6 +125,13 @@ public class Main {
                         break;
                     }
                 }
+                break;
+            }
+            case "reset": {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 2);
+                String commitId = args[1];
+                Repository.reset(commitId);
                 break;
             }
             // TODO: FILL THE REST IN
