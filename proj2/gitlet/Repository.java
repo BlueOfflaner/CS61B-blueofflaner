@@ -162,13 +162,11 @@ public class Repository {
     public static void find(String msg) {
         Queue<Commit> commits = getAllCommits();
         StringBuilder sb = new StringBuilder();
-        commits.forEach(
-                commit -> {
-                    if (commit.getMessage().equals(msg)) {
-                        sb.append(commit.getId()).append("\n");
-                    }
-                }
-        );
+        commits.forEach(commit -> {
+            if (commit.getMessage().equals(msg)) {
+                sb.append(commit.getId()).append("\n");
+            }
+        });
         if (sb.length() == 0) {
             exit(FailureMessage.FIND_NO_COMMIT);
         }
@@ -177,6 +175,39 @@ public class Repository {
 
     public static void status() {
         //TODO complete status
+        StringBuilder statusBuilder = new StringBuilder();
+        statusBuilder.append("=== Branches ===").append("\n");
+        List<String> branchHeads = plainFilenamesIn(BRANCH_HEADS_DIR);
+        String currentBranch = getCurrentBranch();
+        assert branchHeads != null;
+        for (String branch : branchHeads) {
+            if (branch.equals(currentBranch)) {
+                statusBuilder.append("*");
+            }
+            statusBuilder.append(branch).append("\n");
+        }
+        statusBuilder.append("\n");
+
+        StagingArea stagingArea = getStagingArea();
+        statusBuilder.append("=== Staged Files ===").append("\n");
+        for (String filePath : stagingArea.getAddition().keySet()) {
+            statusBuilder.append(Paths.get(filePath).getFileName()).append("\n");
+        }
+        statusBuilder.append("\n");
+
+        statusBuilder.append("=== Removed Files ===").append("\n");
+        for (String filePath : stagingArea.getRemoval().keySet()) {
+            statusBuilder.append(Paths.get(filePath).getFileName()).append("\n");
+        }
+        statusBuilder.append("\n");
+
+        statusBuilder.append("=== Modifications Not Staged For Commit ===").append("\n");
+        statusBuilder.append("\n");
+
+        statusBuilder.append("=== Untracked Files ===").append("\n");
+        statusBuilder.append("\n");
+
+        System.out.println(statusBuilder);
     }
 
     public static void branch(String branchName) {
@@ -361,14 +392,12 @@ public class Repository {
         Queue<Commit> commits = new ArrayDeque<>();
         List<String> branchHeads = plainFilenamesIn(BRANCH_HEADS_DIR);
         assert branchHeads != null;
-        branchHeads.forEach(
-                head -> {
-                    File file = join(BRANCH_HEADS_DIR, head);
-                    String commitIds = readContentsAsString(file);
-                    Commit commit = Commit.fromFile(commitIds);
-                    commits.add(commit);
-                }
-        );
+        branchHeads.forEach(head -> {
+            File file = join(BRANCH_HEADS_DIR, head);
+            String commitIds = readContentsAsString(file);
+            Commit commit = Commit.fromFile(commitIds);
+            commits.add(commit);
+        });
         while (!commits.isEmpty()) {
             Commit c = commits.poll();
             queue.add(c);
