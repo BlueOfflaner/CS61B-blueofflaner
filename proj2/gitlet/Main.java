@@ -2,6 +2,7 @@ package gitlet;
 
 import static gitlet.FailureMessage.COMMIT_NO_MESSAGE;
 import static gitlet.FailureMessage.EMPTY_COMMAND;
+import static gitlet.FailureMessage.FIND_NO_COMMIT;
 import static gitlet.FailureMessage.INVAlID_ARGS;
 import static gitlet.MyUtils.exit;
 
@@ -63,6 +64,16 @@ public class Main {
                 Repository.checkWorkingDir();
                 validateNumArgs(args, 1);
                 Repository.globalLog();
+                break;
+            }
+            case "find": {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 2);
+                String message = args[1];
+                if (message.length() == 0) {
+                    exit(FIND_NO_COMMIT);
+                }
+                Repository.find(message);
                 break;
             }
             case "checkout": {

@@ -146,7 +146,7 @@ public class Repository {
             }
             current = Commit.fromFile(parents.get(0));
         }
-        System.out.println(logBuilder);
+        System.out.print(logBuilder);
     }
 
     public static void globalLog() {
@@ -156,7 +156,7 @@ public class Repository {
             Commit poll = commits.poll();
             logBuilder.append(poll.getLog()).append("\n");
         }
-        System.out.println(logBuilder);
+        System.out.print(logBuilder);
     }
 
     public static void find(String msg) {
@@ -172,7 +172,7 @@ public class Repository {
         if (sb.length() == 0) {
             exit(FailureMessage.FIND_NO_COMMIT);
         }
-        System.out.println(sb);
+        System.out.print(sb);
     }
 
     public static void checkout(String branchName) {
@@ -324,13 +324,13 @@ public class Repository {
 
     //TODO 可能会有 bug，暂定
     private static Queue<Commit> getAllCommits() {
-        Queue<Commit> queue = new PriorityQueue<>(Comparator.comparing(Commit::getDate));
+        Queue<Commit> queue = new PriorityQueue<>(Comparator.comparing(Commit::getDate).reversed());
         Queue<Commit> commits = new ArrayDeque<>();
         List<String> branchHeads = plainFilenamesIn(BRANCH_HEADS_DIR);
         assert branchHeads != null;
         branchHeads.forEach(
                 head -> {
-                    File file = join(head);
+                    File file = join(BRANCH_HEADS_DIR, head);
                     String commitIds = readContentsAsString(file);
                     Commit commit = Commit.fromFile(commitIds);
                     commits.add(commit);
