@@ -1,10 +1,10 @@
 package gitlet;
 
 import static gitlet.MyUtils.exit;
-import static gitlet.MyUtils.generatorId;
 import static gitlet.MyUtils.removeFile;
 import static gitlet.Utils.join;
 import static gitlet.Utils.plainFilenamesIn;
+import static gitlet.Utils.readContents;
 import static gitlet.Utils.readContentsAsString;
 import static gitlet.Utils.readObject;
 import static gitlet.Utils.writeContents;
@@ -87,6 +87,7 @@ public class Repository {
         REFS_DIR.mkdir();
         BRANCH_HEADS_DIR.mkdir();
         setCurrentBranch(DEFAULT_BRANCH_NAME);
+        new StagingArea().save();
         commit("initial commit", null, true);
     }
 
@@ -296,7 +297,7 @@ public class Repository {
     }
 
     private static List<File> getCurrentFiles() {
-        List<File> files = null;
+        List<File> files;
         try {
             files = Files.walk(Paths.get(CWD.getPath()))
                     .filter(Files::isRegularFile)
@@ -315,7 +316,7 @@ public class Repository {
         List<File> files = getCurrentFiles();
         for (File file : files) {
             String filePath = file.getAbsolutePath();
-            String blobId = generatorId(file.toString(), filePath);
+            String blobId = Blob.generatorId(filePath, readContents(file));
             map.put(filePath, blobId);
         }
         return map;
@@ -327,7 +328,7 @@ public class Repository {
         Queue<Commit> commits = new ArrayDeque<>();
         List<String> branchHeads = plainFilenamesIn(BRANCH_HEADS_DIR);
         assert branchHeads != null;
-        branchHeads.stream().forEach(
+        branchHeads.forEach(
                 head -> {
                     File file = join(head);
                     String commitIds = readContentsAsString(file);

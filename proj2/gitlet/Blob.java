@@ -1,6 +1,5 @@
 package gitlet;
 
-import static gitlet.MyUtils.generatorId;
 import static gitlet.MyUtils.getObjectFile;
 import static gitlet.MyUtils.saveObjectFile;
 import static gitlet.Utils.readContents;
@@ -19,9 +18,9 @@ public class Blob implements Serializable {
     public Blob(File fileName) {
         file = fileName;
         filePath = file.getPath();
-        id = generatorId(file.toString(), filePath);
-        saveBlobFile = getObjectFile(id);
         contents = readContents(file);
+        id = generatorId(filePath, contents);
+        saveBlobFile = getObjectFile(id);
     }
 
     public void save() {
@@ -46,6 +45,10 @@ public class Blob implements Serializable {
 
     public byte[] getContents() {
         return contents;
+    }
+
+    public static String generatorId(String filePath, byte[] contents) {
+        return MyUtils.generatorId(filePath, contents);
     }
 
     public static Blob fromFile(String id) {

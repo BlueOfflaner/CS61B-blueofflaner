@@ -52,10 +52,10 @@ public class Commit implements Serializable {
             this.date = new Date();
         }
         this.message = msg;
-        this.id = generatorId(getTimestamp(), message);
-        this.file = getObjectFile(id);
         this.tracked = tracked;
         this.parents = parents;
+        this.id = generatorId(getTimestamp(), message, tracked.toString(), parents.toString());
+        this.file = getObjectFile(id);
     }
 
     public void save() {
