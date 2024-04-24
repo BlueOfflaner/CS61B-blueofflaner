@@ -1,5 +1,6 @@
 package gitlet;
 
+import static gitlet.FailureMessage.COMMAND_NOT_EXIST;
 import static gitlet.FailureMessage.COMMIT_NO_MESSAGE;
 import static gitlet.FailureMessage.EMPTY_COMMAND;
 import static gitlet.FailureMessage.FIND_NO_COMMIT;
@@ -9,7 +10,7 @@ import static gitlet.MyUtils.exit;
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
  *
- * @author TODO
+ * @author blueofflaner
  */
 public class Main {
 
@@ -35,7 +36,6 @@ public class Main {
                 String fileName = args[1];
                 Repository.add(fileName);
                 break;
-                // TODO: handle the `add [filename]` command
             }
             case "rm": {
                 Repository.checkWorkingDir();
@@ -135,7 +135,13 @@ public class Main {
                 Repository.reset(commitId);
                 break;
             }
-            // TODO: FILL THE REST IN
+            case "merge": {
+                break;
+            }
+            default: {
+                exit(COMMAND_NOT_EXIST);
+                break;
+            }
         }
     }
 

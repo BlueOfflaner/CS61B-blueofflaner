@@ -1,6 +1,7 @@
 package gitlet;
 
 import static gitlet.MyUtils.exit;
+import static gitlet.MyUtils.getDirName;
 import static gitlet.MyUtils.removeFile;
 import static gitlet.Utils.join;
 import static gitlet.Utils.plainFilenamesIn;
@@ -23,18 +24,15 @@ import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-// TODO: any imports you need here
-
 /**
  * Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
+
  *  does at a high level.
  *
- * @author TODO
+ * @author blueofflaner
  */
 public class Repository {
     /**
-     * TODO: add instance variables here.
      *
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
@@ -76,8 +74,6 @@ public class Repository {
 
     private static final String DEFAULT_BRANCH_NAME = "master";
 
-
-    /* TODO: fill in the rest of this class. */
     public static void init() {
         if (GITLET_DIR.exists()) {
             exit(FailureMessage.INIT);
@@ -175,7 +171,6 @@ public class Repository {
     }
 
     public static void status() {
-        //TODO complete status
         StringBuilder statusBuilder = new StringBuilder();
         statusBuilder.append("=== Branches ===").append("\n");
         List<String> branchHeads = plainFilenamesIn(BRANCH_HEADS_DIR);
@@ -202,6 +197,7 @@ public class Repository {
         }
         statusBuilder.append("\n");
 
+        //TODO extra credit
         statusBuilder.append("=== Modifications Not Staged For Commit ===").append("\n");
         statusBuilder.append("\n");
 
@@ -240,13 +236,13 @@ public class Repository {
         }
         String commitId = readContentsAsString(branchHead);
         Commit commit = Commit.fromFile(commitId);
+        assert commit != null;
         checkUntrackedFile(commit);
         checkout(commitId, null);
         setCurrentBranch(branchName);
     }
 
     public static void checkout(String commitId, String fileName) {
-        //TODO complete checkout
         Commit commit = commitId == null ? getHeadCommit()
                                          : Commit.fromFile(getRealCommitId(commitId));
         if (commit == null) {
@@ -259,6 +255,7 @@ public class Repository {
             for (File file : files) {
                 removeFile(file);
             }
+            assert commit != null;
             Map<String, String> tracked = commit.getTracked();
             for (String blobId : tracked.values()) {
                 Blob blob = Blob.fromFile(blobId);
@@ -283,14 +280,36 @@ public class Repository {
         if (commit == null) {
             exit(FailureMessage.CHECKOUT_COMMIT_NOT_EXIST);
         }
+        assert commit != null;
         checkUntrackedFile(commit);
         checkout(commitId, null);
         setBranchHeadCommit(getCurrentBranch(), commitId);
     }
 
-    //TODO deal with commitId length
     private static String getRealCommitId(String commitId) {
-        return commitId;
+        if (commitId.length() < 6) {
+            exit(FailureMessage.COMMIT_ID_TOO_SHORT);
+        }
+        String dirName = getDirName(commitId);
+        File dir = join(COMMITS_DIR, dirName);
+        if (!dir.exists()) {
+            exit(FailureMessage.CHECKOUT_COMMIT_NOT_EXIST);
+        }
+        String[] fileNames = Objects.requireNonNull(dir.list());
+        List<String> res = new ArrayList<>();
+        commitId = commitId.substring(2);
+        for (String fileName : fileNames) {
+            if (commitId.equals(fileName.substring(0, commitId.length()))) {
+                res.add(dirName + fileName);
+            }
+        }
+        if (res.isEmpty()) {
+            exit(FailureMessage.CHECKOUT_COMMIT_NOT_EXIST);
+        }
+        if (res.size() > 1) {
+            exit(FailureMessage.MULTI_COMMIT_MATCHING);
+        }
+        return res.get(0);
     }
 
     public static void checkWorkingDir() {
@@ -381,7 +400,6 @@ public class Repository {
         return files;
     }
 
-    //TODO 可能有 bug，等待测试
     private static Map<String, String> getFileMapFromCWD() {
         Map<String, String> map = new TreeMap<>();
         List<File> files = getCurrentFiles();
@@ -393,11 +411,10 @@ public class Repository {
         return map;
     }
 
-    //TODO 可能会有 bug，暂定
     private static List<Commit> getAllCommits() {
         List<Commit> list = new ArrayList<>();
         File commitDir = join(COMMITS_DIR);
-        List<String> dirNames = Arrays.asList(Objects.requireNonNull(commitDir.list()));
+        String[] dirNames = Objects.requireNonNull(commitDir.list());
         for (String dirName : dirNames) {
             List<String> filenames = plainFilenamesIn(join(commitDir, dirName));
             assert filenames != null;

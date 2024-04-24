@@ -1,6 +1,5 @@
 package gitlet;
 
-// TODO: any imports you need here
 
 import static gitlet.MyUtils.generatorId;
 import static gitlet.MyUtils.getObjectFile;
@@ -18,14 +17,12 @@ import java.util.Map;
 
 /**
  * Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- * @author TODO
+ * @author blueofflaner
  */
 public class Commit implements Serializable {
     /**
-     * TODO: add instance variables here.
      * <p>
      * List all instance variables of the Commit class here with a useful
      * comment above them describing what that variable represents and how that
@@ -41,8 +38,6 @@ public class Commit implements Serializable {
     private File file;
     private Map<String, String> tracked;
     private List<String> parents;
-
-    /* TODO: fill in the rest of this class. */
 
 
     public Commit(String msg, Map<String, String> tracked, List<String> parents, boolean isInit) {
