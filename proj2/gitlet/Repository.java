@@ -16,18 +16,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
  * Represents a gitlet repository.
-
- *  does at a high level.
+ * <p>
+ * does at a high level.
  *
  * @author blueofflaner
  */
@@ -137,6 +138,7 @@ public class Repository {
         Commit current = getHeadCommit();
         StringBuilder logBuilder = new StringBuilder();
         while (true) {
+            assert current != null;
             logBuilder.append(current.getLog()).append("\n");
             List<String> parents = current.getParents();
             if (parents.isEmpty()) {
@@ -286,6 +288,126 @@ public class Repository {
         setBranchHeadCommit(getCurrentBranch(), commitId);
     }
 
+    public static void merge(String mergedBranch) {
+        String currentBranch = getCurrentBranch();
+        if (mergedBranch.equals(currentBranch)) {
+            exit(FailureMessage.MERGE_CAN_NOT_MERGE_ITSELF);
+        }
+        File branchHead = getBranchHead(mergedBranch);
+        if (!branchHead.exists()) {
+            exit(FailureMessage.MERGE_BRANCH_NOT_EXIST);
+        }
+        StagingArea stagingArea = getStagingArea();
+        if (!stagingArea.isEmpty()) {
+            exit(FailureMessage.MERGE_UNCOMMITTED_CHANGES);
+        }
+        Commit mergedHeadCommit = getBranchHeadCommit(branchHead);
+        checkUntrackedFile(mergedHeadCommit);
+        Commit currentHeadCommit = getHeadCommit();
+        Commit lca = getLatestCommonAncestorCommit(currentHeadCommit, mergedHeadCommit);
+        String lcaId = lca.getId();
+        if (lcaId.equals(currentHeadCommit.getId())) {
+            checkout(mergedHeadCommit.getId(), null);
+            setCurrentBranch(mergedBranch);
+            exit(FailureMessage.MERGE_CURRENT_BRANCH_EQUALS_SPLIT_POINT);
+        } else if (lcaId.equals(mergedHeadCommit.getId())) {
+            exit(FailureMessage.MERGE_MERGED_BRANCH_EQUALS_SPLIT_POINT);
+        }
+
+        Map<String, String> currentHeadCommitTracked = currentHeadCommit.getTracked();
+        Map<String, String> mergedHeadCommitTracked = mergedHeadCommit.getTracked();
+        Map<String, String> splitPointCommitTracked = lca.getTracked();
+
+        Set<String> filePaths = new HashSet<>();
+        filePaths.addAll(currentHeadCommitTracked.keySet());
+        filePaths.addAll(mergedHeadCommitTracked.keySet());
+        filePaths.addAll(splitPointCommitTracked.keySet());
+        boolean isConflict = false;
+        for (String filePath : filePaths) {
+            String currentBlobId = currentHeadCommitTracked.get(filePath);
+            String mergedBlobId = mergedHeadCommitTracked.get(filePath);
+            String splitPointBlobId = splitPointCommitTracked.get(filePath);
+            if (currentHeadCommitTracked.containsKey(filePath)
+                    && mergedHeadCommitTracked.containsKey(filePath)) {
+                // modified in other and HEAD in same way
+                if (currentBlobId.equals(mergedBlobId)) {
+                    add(join(filePath).getName());
+                    continue;
+                }
+                // modified in other and HEAD in diff way
+                if (!currentBlobId.equals(splitPointBlobId)
+                        && !mergedBlobId.equals(splitPointBlobId)) {
+                    isConflict = true;
+                    Blob currentBlob = Blob.fromFile(currentBlobId);
+                    Blob mergedBlob = Blob.fromFile(mergedBlobId);
+                    StringBuilder newContents = new StringBuilder();
+                    newContents.append("<<<<<<< HEAD\n")
+                            .append(readContentsAsString(currentBlob.getFile()))
+                            .append("=======\n")
+                            .append(readContentsAsString(mergedBlob.getFile()));
+                    writeContents(currentBlob.getFile(), newContents.toString());
+                    add(currentBlob.getFilePath());
+                } else if (currentBlobId.equals(splitPointBlobId)) {
+                    // modified in other but not HEAD -> other
+                    add(join(filePath).getName());
+                } else {
+                    // modified in HEAD but not other -> HEAD
+                    add(join(filePath).getName());
+                }
+                continue;
+            }
+            if (splitPointCommitTracked.containsKey(filePath)) {
+                if (currentHeadCommitTracked.containsKey(filePath)
+                        && !mergedHeadCommitTracked.containsKey(filePath)) {
+                    // unmodified in HEAD but not present in other -> REMOVE
+                    if (splitPointBlobId.equals(currentBlobId)) {
+                        remove(join(filePath).getName());
+                    } else {
+                        add(join(filePath).getName());
+                    }
+                }
+                // unmodified in other but not present in HEAD -> REMAIN REMOVE
+
+            } else {
+                // not in split non other but in HEAD -> HEAD
+                if (currentHeadCommitTracked.containsKey(filePath)
+                        && !mergedHeadCommitTracked.containsKey(filePath)) {
+                    add(join(filePath).getName());
+                    continue;
+                }
+                // not in split non HEAD but in other -> other
+                if (!currentHeadCommitTracked.containsKey(filePath)
+                        && mergedHeadCommitTracked.containsKey(filePath)) {
+                    add(join(filePath).getName());
+                }
+            }
+        }
+
+        String msg = String.format("Merged %s into %s.", mergedBranch, currentBranch);
+        commit(msg, mergedHeadCommit.getId(), false);
+        if (isConflict) {
+            System.out.println("Encountered a merge conflict.");
+        }
+    }
+
+    private static Commit getLatestCommonAncestorCommit(Commit c1, Commit c2) {
+        Set<Commit> ancestors = new HashSet<>();
+        while (c1.getParents().size() > 0) {
+            ancestors.add(c1);
+            c1 = Objects.requireNonNull(Commit.fromFile(c1.getParents().get(0)));
+        }
+        Commit root = c1;
+        ancestors.add(c1);
+
+        while (c2.getParents().size() > 0) {
+            if (ancestors.contains(c2)) {
+                return c2;
+            }
+            c2 = Objects.requireNonNull(Commit.fromFile(c2.getParents().get(0)));
+        }
+        return root;
+    }
+
     private static String getRealCommitId(String commitId) {
         if (commitId.length() < 6) {
             exit(FailureMessage.COMMIT_ID_TOO_SHORT);
@@ -374,9 +496,11 @@ public class Repository {
     }
 
     private static Commit getHeadCommit() {
-        File currentHead = getBranchHead(getCurrentBranch());
-        String commitId = readContentsAsString(currentHead);
-        return Commit.fromFile(commitId);
+        return getBranchHeadCommit(getBranchHead(getCurrentBranch()));
+    }
+
+    private static Commit getBranchHeadCommit(File branchHead) {
+        return Commit.fromFile(readContentsAsString(branchHead));
     }
 
     private static StagingArea getStagingArea() {

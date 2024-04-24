@@ -136,6 +136,10 @@ public class Main {
                 break;
             }
             case "merge": {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 2);
+                String branchName = args[1];
+                Repository.merge(branchName);
                 break;
             }
             default: {

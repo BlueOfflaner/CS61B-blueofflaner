@@ -25,7 +25,13 @@ public enum FailureMessage {
     MULTI_COMMIT_MATCHING("There are more than 1 commit id matching this shortened id"),
     BRANCH_ALREADY_EXIST("A branch with that name already exists."),
     REMOVE_BRANCH_CAN_NOT_REMOVE_CURRENT_BRANCH("Cannot remove the current branch."),
-    REMOVE_BRANCH_NOT_EXIST("A branch with that name does not exist.");
+    REMOVE_BRANCH_NOT_EXIST("A branch with that name does not exist."),
+    MERGE_CAN_NOT_MERGE_ITSELF("Cannot merge a branch with itself."),
+    MERGE_BRANCH_NOT_EXIST("A branch with that name does not exist."),
+    MERGE_UNCOMMITTED_CHANGES("You have uncommitted changes."),
+    MERGE_CURRENT_BRANCH_EQUALS_SPLIT_POINT("Current branch fast-forwarded."),
+    MERGE_MERGED_BRANCH_EQUALS_SPLIT_POINT("Given branch is an ancestor of the current branch."),
+    ;
 
     final String msg;
 
