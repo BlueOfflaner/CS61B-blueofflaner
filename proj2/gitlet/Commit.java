@@ -55,7 +55,7 @@ public class Commit implements Serializable {
         this.tracked = tracked;
         this.parents = parents;
         this.id = generatorId(getTimestamp(), message, tracked.toString(), parents.toString());
-        this.file = getObjectFile(id);
+        this.file = getObjectFile(Repository.COMMITS_DIR, id);
     }
 
     public void save() {
@@ -105,7 +105,7 @@ public class Commit implements Serializable {
     }
 
     public static Commit fromFile(String id) {
-        File commitFile = getObjectFile(id);
+        File commitFile = getObjectFile(Repository.COMMITS_DIR, id);
         if (!commitFile.exists()) {
             return null;
         }

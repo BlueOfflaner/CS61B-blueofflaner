@@ -14,14 +14,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -65,6 +63,8 @@ public class Repository {
      * The objects' directory.
      */
     public static final File OBJECTS_DIR = join(GITLET_DIR, "objects");
+    public static final File COMMITS_DIR = join(OBJECTS_DIR, "commits");
+    public static final File BLOBS_DIR = join(OBJECTS_DIR, "blobs");
     /**
      * The refs' directory.
      */
@@ -84,6 +84,8 @@ public class Repository {
         }
         GITLET_DIR.mkdir();
         OBJECTS_DIR.mkdir();
+        COMMITS_DIR.mkdir();
+        BLOBS_DIR.mkdir();
         REFS_DIR.mkdir();
         BRANCH_HEADS_DIR.mkdir();
         setCurrentBranch(DEFAULT_BRANCH_NAME);
@@ -150,17 +152,16 @@ public class Repository {
     }
 
     public static void globalLog() {
-        Queue<Commit> commits = getAllCommits();
+        List<Commit> commits = getAllCommits();
         StringBuilder logBuilder = new StringBuilder();
-        while (!commits.isEmpty()) {
-            Commit poll = commits.poll();
-            logBuilder.append(poll.getLog()).append("\n");
+        for (Commit commit : commits) {
+            logBuilder.append(commit.getLog()).append("\n");
         }
         System.out.print(logBuilder);
     }
 
     public static void find(String msg) {
-        Queue<Commit> commits = getAllCommits();
+        List<Commit> commits = getAllCommits();
         StringBuilder sb = new StringBuilder();
         commits.forEach(commit -> {
             if (commit.getMessage().equals(msg)) {
@@ -393,24 +394,18 @@ public class Repository {
     }
 
     //TODO 可能会有 bug，暂定
-    private static Queue<Commit> getAllCommits() {
-        Queue<Commit> queue = new PriorityQueue<>(Comparator.comparing(Commit::getDate).reversed());
-        Queue<Commit> commits = new ArrayDeque<>();
-        List<String> branchHeads = plainFilenamesIn(BRANCH_HEADS_DIR);
-        assert branchHeads != null;
-        branchHeads.forEach(head -> {
-            File file = join(BRANCH_HEADS_DIR, head);
-            String commitIds = readContentsAsString(file);
-            Commit commit = Commit.fromFile(commitIds);
-            commits.add(commit);
-        });
-        while (!commits.isEmpty()) {
-            Commit c = commits.poll();
-            queue.add(c);
-            for (String s : c.getParents()) {
-                commits.add(Commit.fromFile(s));
+    private static List<Commit> getAllCommits() {
+        List<Commit> list = new ArrayList<>();
+        File commitDir = join(COMMITS_DIR);
+        List<String> dirNames = Arrays.asList(Objects.requireNonNull(commitDir.list()));
+        for (String dirName : dirNames) {
+            List<String> filenames = plainFilenamesIn(join(commitDir, dirName));
+            assert filenames != null;
+            for (String fileName : filenames) {
+                Commit commit = Commit.fromFile(dirName + fileName);
+                list.add(commit);
             }
         }
-        return queue;
+        return list;
     }
 }

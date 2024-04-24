@@ -27,10 +27,10 @@ public class MyUtils {
         return sha1(args);
     }
 
-    static File getObjectFile(String id) {
+    static File getObjectFile(File file, String id) {
         String dirName = getDirName(id);
         String fileName = getFileName(id);
-        return join(Repository.OBJECTS_DIR, dirName, fileName);
+        return join(file, dirName, fileName);
     }
 
     static String getDirName(String id) {

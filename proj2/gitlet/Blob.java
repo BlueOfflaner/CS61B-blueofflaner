@@ -20,7 +20,7 @@ public class Blob implements Serializable {
         filePath = file.getPath();
         contents = readContents(file);
         id = generatorId(filePath, contents);
-        saveBlobFile = getObjectFile(id);
+        saveBlobFile = getObjectFile(Repository.BLOBS_DIR, id);
     }
 
     public void save() {
@@ -52,6 +52,6 @@ public class Blob implements Serializable {
     }
 
     public static Blob fromFile(String id) {
-        return readObject(getObjectFile(id), Blob.class);
+        return readObject(getObjectFile(Repository.BLOBS_DIR, id), Blob.class);
     }
 }
