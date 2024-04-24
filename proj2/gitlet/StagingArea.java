@@ -22,13 +22,12 @@ public class StagingArea implements Serializable {
         String blobId = blob.getId();
         String trackedBlobId = tracked.get(filePath);
         if (blobId.equals(trackedBlobId)) {
-            return false;
+            if (addition.remove(filePath) != null) {
+                return true;
+            }
+            return removal.remove(filePath) != null;
         }
         addition.put(filePath, blobId);
-        String removalBlobId = removal.get(filePath);
-        if (blobId.equals(removalBlobId)) {
-            removal.remove(filePath);
-        }
         if (!blob.getSaveBlobFile().exists()) {
             blob.save();
         }

@@ -51,8 +51,8 @@ public class MyUtils {
 
     public static void removeFile(File file) {
         if (!file.delete()) {
-            throw new IllegalArgumentException
-                    (String.format("rm: %s: Failed to delete.", file.getPath()));
+            throw new IllegalArgumentException(String
+                    .format("rm: %s: Failed to delete.", file.getPath()));
         }
     }
 }

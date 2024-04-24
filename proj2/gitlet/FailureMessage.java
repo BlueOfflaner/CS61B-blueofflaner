@@ -21,8 +21,8 @@ public enum FailureMessage {
     CHECKOUT_UNTRACKED_FILE_EXIST
             ("There is an untracked file in the way; delete it, or add and commit it first."),
     BRANCH_ALREADY_EXIST("A branch with that name already exists."),
-    REMOVE_BRANCH_CAN_NOT_REMOVE_CURRENT_BRANCH("A branch with that name does not exist."),
-    REMOVE_BRANCH_NOT_EXIST("Cannot remove the current branch.");
+    REMOVE_BRANCH_CAN_NOT_REMOVE_CURRENT_BRANCH("Cannot remove the current branch."),
+    REMOVE_BRANCH_NOT_EXIST("A branch with that name does not exist.");
 
     final String msg;
 

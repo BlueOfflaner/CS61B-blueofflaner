@@ -106,6 +106,9 @@ public class Commit implements Serializable {
 
     public static Commit fromFile(String id) {
         File commitFile = getObjectFile(id);
+        if (!commitFile.exists()) {
+            return null;
+        }
         return readObject(commitFile, Commit.class);
     }
 }

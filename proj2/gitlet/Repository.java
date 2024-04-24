@@ -211,24 +211,21 @@ public class Repository {
     }
 
     public static void branch(String branchName) {
-        List<String> branchHeads = plainFilenamesIn(BRANCH_HEADS_DIR);
-        assert branchHeads != null;
-        if (branchHeads.contains(branchName)) {
+        File branchHead = getBranchHead(branchName);
+        if (branchHead.exists()) {
             exit(FailureMessage.BRANCH_ALREADY_EXIST);
         }
-        setBranchHeadCommit(branchName, getHeadCommit().getId());
+        setBranchHeadCommit(branchHead, getHeadCommit().getId());
     }
 
     public static void rmBranch(String branchName) {
         if (getCurrentBranch().equals(branchName)) {
             exit(FailureMessage.REMOVE_BRANCH_CAN_NOT_REMOVE_CURRENT_BRANCH);
         }
-        List<String> branchHeads = plainFilenamesIn(BRANCH_HEADS_DIR);
-        assert branchHeads != null;
-        if (!branchHeads.contains(branchName)) {
+        File branchHead = getBranchHead(branchName);
+        if (!branchHead.exists()) {
             exit(FailureMessage.REMOVE_BRANCH_NOT_EXIST);
         }
-        File branchHead = getBranchHead(branchName);
         removeFile(branchHead);
     }
 
@@ -249,7 +246,8 @@ public class Repository {
 
     public static void checkout(String commitId, String fileName) {
         //TODO complete checkout
-        Commit commit = commitId == null ? getHeadCommit() : Commit.fromFile(getRealCommitId(commitId));
+        Commit commit = commitId == null ? getHeadCommit()
+                                         : Commit.fromFile(getRealCommitId(commitId));
         if (commit == null) {
             exit(FailureMessage.CHECKOUT_COMMIT_NOT_EXIST);
         }
@@ -269,10 +267,10 @@ public class Repository {
         }
         assert commit != null;
         File file = getFileFromCWD(fileName);
-        removeFile(file);
         if (!commit.getTracked().containsKey(file.getPath())) {
             exit(FailureMessage.CHECKOUT_FILE_NOT_EXIST);
         } else {
+            removeFile(file);
             String blobId = commit.getTracked().get(file.getPath());
             Blob blob = Blob.fromFile(blobId);
             writeContents(blob.getFile(), blob.getContents());
@@ -281,6 +279,9 @@ public class Repository {
 
     public static void reset(String commitId) {
         Commit commit = Commit.fromFile(getRealCommitId(commitId));
+        if (commit == null) {
+            exit(FailureMessage.CHECKOUT_COMMIT_NOT_EXIST);
+        }
         checkUntrackedFile(commit);
         checkout(commitId, null);
         setBranchHeadCommit(getCurrentBranch(), commitId);
@@ -333,6 +334,10 @@ public class Repository {
         writeContents(getBranchHead(branchName), commitId);
     }
 
+    private static void setBranchHeadCommit(File branchHead, String commitId) {
+        writeContents(branchHead, commitId);
+    }
+
     private static String getCurrentBranch() {
         String path = readContentsAsString(HEAD);
         return path.replace(HEAD_BRANCH_REF_PREFIX, "");
@@ -355,7 +360,8 @@ public class Repository {
     }
 
     private static StagingArea getStagingArea() {
-        StagingArea stagingArea = INDEX.exists() ? readObject(INDEX, StagingArea.class) : new StagingArea();
+        StagingArea stagingArea = INDEX.exists() ? readObject(INDEX, StagingArea.class)
+                                                 : new StagingArea();
         stagingArea.setTracked(getHeadCommit().getTracked());
         return stagingArea;
     }

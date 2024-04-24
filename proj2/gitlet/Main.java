@@ -94,6 +94,7 @@ public class Main {
                 validateNumArgs(args, 2);
                 String branchName = args[1];
                 Repository.rmBranch(branchName);
+                break;
             }
             case "checkout": {
                 Repository.checkWorkingDir();
