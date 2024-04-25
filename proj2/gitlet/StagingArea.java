@@ -3,9 +3,7 @@ package gitlet;
 import java.io.File;
 import java.io.Serializable;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 public class StagingArea implements Serializable {
 
@@ -42,9 +40,9 @@ public class StagingArea implements Serializable {
 
     public Map<String, String> commit() {
         tracked.putAll(addition);
-        tracked.entrySet().stream()
-                .filter(entry -> !removal.containsKey(entry.getKey()))
-                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+        for (String key : removal.keySet()) {
+            tracked.remove(key);
+        }
         clear();
         return tracked;
     }

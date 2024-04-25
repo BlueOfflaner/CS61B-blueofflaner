@@ -43,37 +43,48 @@ public class Repository {
     /**
      * The current working directory.
      */
-    public static final File CWD = new File(System.getProperty("user.dir"));
+    public static File CWD = new File(System.getProperty("user.dir"));
     /**
      * The .gitlet directory.
      */
-    public static final File GITLET_DIR = join(CWD, ".gitlet");
+    public static File GITLET_DIR = join(CWD, ".gitlet");
     /**
      * The HEAD file.
      */
-    public static final File HEAD = join(GITLET_DIR, "HEAD");
+    public static File HEAD = join(GITLET_DIR, "HEAD");
     private static final String HEAD_BRANCH_REF_PREFIX = "ref: refs/heads/";
 
     /**
      * The INDEX file.
      */
-    public static final File INDEX = join(GITLET_DIR, "INDEX");
+    public static File INDEX = join(GITLET_DIR, "INDEX");
     /**
      * The objects' directory.
      */
-    public static final File OBJECTS_DIR = join(GITLET_DIR, "objects");
-    public static final File COMMITS_DIR = join(OBJECTS_DIR, "commits");
-    public static final File BLOBS_DIR = join(OBJECTS_DIR, "blobs");
+    public static File OBJECTS_DIR = join(GITLET_DIR, "objects");
+    public static File COMMITS_DIR = join(OBJECTS_DIR, "commits");
+    public static File BLOBS_DIR = join(OBJECTS_DIR, "blobs");
     /**
      * The refs' directory.
      */
-    public static final File REFS_DIR = join(GITLET_DIR, "refs");
+    public static File REFS_DIR = join(GITLET_DIR, "refs");
     /**
      * The refs/heads directory.
      */
-    public static final File BRANCH_HEADS_DIR = join(REFS_DIR, "heads");
+    public static File BRANCH_HEADS_DIR = join(REFS_DIR, "heads");
 
-    private static final String DEFAULT_BRANCH_NAME = "master";
+    private static String DEFAULT_BRANCH_NAME = "master";
+
+    public static void refresh() {
+        GITLET_DIR = join(CWD, ".gitlet");
+        HEAD = join(GITLET_DIR, "HEAD");
+        INDEX = join(GITLET_DIR, "INDEX");
+        OBJECTS_DIR = join(GITLET_DIR, "objects");
+        COMMITS_DIR = join(OBJECTS_DIR, "commits");
+        BLOBS_DIR = join(OBJECTS_DIR, "blobs");
+        REFS_DIR = join(GITLET_DIR, "refs");
+        BRANCH_HEADS_DIR = join(REFS_DIR, "heads");
+    }
 
     public static void init() {
         if (GITLET_DIR.exists()) {
@@ -323,6 +334,7 @@ public class Repository {
         filePaths.addAll(mergedHeadCommitTracked.keySet());
         filePaths.addAll(splitPointCommitTracked.keySet());
         boolean isConflict = false;
+
         for (String filePath : filePaths) {
             String currentBlobId = currentHeadCommitTracked.get(filePath);
             String mergedBlobId = mergedHeadCommitTracked.get(filePath);
@@ -331,7 +343,7 @@ public class Repository {
                     && mergedHeadCommitTracked.containsKey(filePath)) {
                 // modified in other and HEAD in same way
                 if (currentBlobId.equals(mergedBlobId)) {
-                    add(join(filePath).getName());
+                    Repository.add(join(filePath).getName());
                     continue;
                 }
                 // modified in other and HEAD in diff way
@@ -346,13 +358,17 @@ public class Repository {
                             .append("=======\n")
                             .append(readContentsAsString(mergedBlob.getFile()));
                     writeContents(currentBlob.getFile(), newContents.toString());
-                    add(currentBlob.getFilePath());
+                    Repository.add(join(filePath).getName());
                 } else if (currentBlobId.equals(splitPointBlobId)) {
                     // modified in other but not HEAD -> other
-                    add(join(filePath).getName());
+                    Blob mergedBlob = Blob.fromFile(mergedBlobId);
+                    writeContents(mergedBlob.getFile(), mergedBlob.getContents());
+                    stagingArea = getStagingArea();
+                    stagingArea.add(mergedBlob.getFile());
+                    stagingArea.save();
                 } else {
                     // modified in HEAD but not other -> HEAD
-                    add(join(filePath).getName());
+                    Repository.add(join(filePath).getName());
                 }
                 continue;
             }
@@ -361,9 +377,9 @@ public class Repository {
                         && !mergedHeadCommitTracked.containsKey(filePath)) {
                     // unmodified in HEAD but not present in other -> REMOVE
                     if (splitPointBlobId.equals(currentBlobId)) {
-                        remove(join(filePath).getName());
+                        Repository.remove(join(filePath).getName());
                     } else {
-                        add(join(filePath).getName());
+                        Repository.add(join(filePath).getName());
                     }
                 }
                 // unmodified in other but not present in HEAD -> REMAIN REMOVE
@@ -372,35 +388,39 @@ public class Repository {
                 // not in split non other but in HEAD -> HEAD
                 if (currentHeadCommitTracked.containsKey(filePath)
                         && !mergedHeadCommitTracked.containsKey(filePath)) {
-                    add(join(filePath).getName());
+                    Repository.add(join(filePath).getName());
                     continue;
                 }
                 // not in split non HEAD but in other -> other
                 if (!currentHeadCommitTracked.containsKey(filePath)
                         && mergedHeadCommitTracked.containsKey(filePath)) {
-                    add(join(filePath).getName());
+                    Blob mergedBlob = Blob.fromFile(mergedBlobId);
+                    writeContents(mergedBlob.getFile(), mergedBlob.getContents());
+                    stagingArea = getStagingArea();
+                    stagingArea.add(mergedBlob.getFile());
+                    stagingArea.save();
                 }
             }
         }
-
         String msg = String.format("Merged %s into %s.", mergedBranch, currentBranch);
-        commit(msg, mergedHeadCommit.getId(), false);
+        Repository.commit(msg, mergedHeadCommit.getId(), false);
+        // Repository.rmBranch(mergedBranch);
         if (isConflict) {
             System.out.println("Encountered a merge conflict.");
         }
     }
 
     private static Commit getLatestCommonAncestorCommit(Commit c1, Commit c2) {
-        Set<Commit> ancestors = new HashSet<>();
+        Set<String> ancestors = new HashSet<>();
         while (c1.getParents().size() > 0) {
-            ancestors.add(c1);
+            ancestors.add(c1.getId());
             c1 = Objects.requireNonNull(Commit.fromFile(c1.getParents().get(0)));
         }
         Commit root = c1;
-        ancestors.add(c1);
+        ancestors.add(c1.getId());
 
         while (c2.getParents().size() > 0) {
-            if (ancestors.contains(c2)) {
+            if (ancestors.contains(c2.getId())) {
                 return c2;
             }
             c2 = Objects.requireNonNull(Commit.fromFile(c2.getParents().get(0)));
