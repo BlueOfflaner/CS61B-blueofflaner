@@ -46,48 +46,36 @@ public class Repository {
     /**
      * The current working directory.
      */
-    public static File CWD = new File(System.getProperty("user.dir"));
+    static final File CWD = new File(System.getProperty("user.dir"));
     /**
      * The .gitlet directory.
      */
-    public static File GITLET_DIR = join(CWD, ".gitlet");
+    static final File GITLET_DIR = join(CWD, ".gitlet");
     /**
      * The HEAD file.
      */
-    public static File HEAD = join(GITLET_DIR, "HEAD");
+    static final File HEAD = join(GITLET_DIR, "HEAD");
     private static final String HEAD_BRANCH_REF_PREFIX = "ref: refs/heads/";
 
     /**
      * The INDEX file.
      */
-    public static File INDEX = join(GITLET_DIR, "INDEX");
+    static final File INDEX = join(GITLET_DIR, "INDEX");
     /**
      * The objects' directory.
      */
-    public static File OBJECTS_DIR = join(GITLET_DIR, "objects");
-    public static File COMMITS_DIR = join(OBJECTS_DIR, "commits");
-    public static File BLOBS_DIR = join(OBJECTS_DIR, "blobs");
+    static final File OBJECTS_DIR = join(GITLET_DIR, "objects");
+    static final File COMMITS_DIR = join(OBJECTS_DIR, "commits");
+    static final File BLOBS_DIR = join(OBJECTS_DIR, "blobs");
     /**
      * The refs' directory.
      */
-    public static File REFS_DIR = join(GITLET_DIR, "refs");
+    static final File REFS_DIR = join(GITLET_DIR, "refs");
     /**
      * The refs/heads directory.
      */
-    public static File BRANCH_HEADS_DIR = join(REFS_DIR, "heads");
-
-    private static String DEFAULT_BRANCH_NAME = "master";
-
-    public static void refresh() {
-        GITLET_DIR = join(CWD, ".gitlet");
-        HEAD = join(GITLET_DIR, "HEAD");
-        INDEX = join(GITLET_DIR, "INDEX");
-        OBJECTS_DIR = join(GITLET_DIR, "objects");
-        COMMITS_DIR = join(OBJECTS_DIR, "commits");
-        BLOBS_DIR = join(OBJECTS_DIR, "blobs");
-        REFS_DIR = join(GITLET_DIR, "refs");
-        BRANCH_HEADS_DIR = join(REFS_DIR, "heads");
-    }
+    static final File BRANCH_HEADS_DIR = join(REFS_DIR, "heads");
+    private static final String DEFAULT_BRANCH_NAME = "master";
 
     public static void init() {
         if (GITLET_DIR.exists()) {
