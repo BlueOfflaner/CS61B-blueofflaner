@@ -215,9 +215,11 @@ public class Repository {
 
         //TODO extra credit
         statusBuilder.append("=== Modifications Not Staged For Commit ===").append("\n");
+        statusBuilder.append(getModifiedNotStagedFiles());
         statusBuilder.append("\n");
 
         statusBuilder.append("=== Untracked Files ===").append("\n");
+        statusBuilder.append(getUntrackedFiles());
         statusBuilder.append("\n");
 
         System.out.println(statusBuilder);
@@ -338,6 +340,37 @@ public class Repository {
         }
     }
 
+    private static String getModifiedNotStagedFiles() {
+        StringBuilder stagedThenModifiedBuilder = new StringBuilder();
+        Map<String, String> fileMap = getFileMapFromCWD();
+        Map<String, String> tracked = getHeadCommit().getTracked();
+        for (String filePath : tracked.keySet()) {
+            if (!fileMap.containsKey(filePath)) {
+                stagedThenModifiedBuilder.append(join(filePath).getName());
+                stagedThenModifiedBuilder.append(" (deleted)");
+                stagedThenModifiedBuilder.append("\n");
+            } else if (!fileMap.get(filePath).equals(tracked.get(filePath))) {
+                stagedThenModifiedBuilder.append(join(filePath).getName());
+                stagedThenModifiedBuilder.append(" (modified)");
+                stagedThenModifiedBuilder.append("\n");
+            }
+        }
+        return stagedThenModifiedBuilder.toString();
+    }
+
+    private static String getUntrackedFiles() {
+        StringBuilder untrackedBuilder = new StringBuilder();
+        List<File> files = getCurrentFiles();
+        Map<String, String> tracked = getHeadCommit().getTracked();
+        for (File file : files) {
+            if (!tracked.containsKey(file.getAbsolutePath())) {
+                untrackedBuilder.append(file.getName());
+                untrackedBuilder.append("\n");
+            }
+        }
+        return untrackedBuilder.toString();
+    }
+
     private static String getConflictContent(String currentBlobId, String mergedBlobId) {
         StringBuilder contentBuilder = new StringBuilder();
         contentBuilder.append("<<<<<<< HEAD").append("\n");
@@ -413,41 +446,34 @@ public class Repository {
         Map<String, String> currentHeadCommitTracked = currentHeadCommit.getTracked();
         Map<String, String> mergedHeadCommitTracked = mergedHeadCommit.getTracked();
         Map<String, String> splitPointCommitTracked = splitPointCommit.getTracked();
-
         Set<String> filePaths = new HashSet<>();
         filePaths.addAll(currentHeadCommitTracked.keySet());
         filePaths.addAll(mergedHeadCommitTracked.keySet());
         filePaths.addAll(splitPointCommitTracked.keySet());
         StagingArea stagingArea;
         boolean isConflict = false;
-
         for (String filePath : filePaths) {
             String currentBlobId = currentHeadCommitTracked.get(filePath);
             String mergedBlobId = mergedHeadCommitTracked.get(filePath);
             String splitPointBlobId = splitPointCommitTracked.get(filePath);
             if (currentHeadCommitTracked.containsKey(filePath)
-                    && mergedHeadCommitTracked.containsKey(filePath)) {
-                // modified in other and HEAD in same way
+                    && mergedHeadCommitTracked.containsKey(filePath)) { // modified in other and HEAD in same way
                 if (currentBlobId.equals(mergedBlobId)) {
                     Repository.add(join(filePath).getName());
                     continue;
                 }
-                // modified in other and HEAD in diff way
                 if (!currentBlobId.equals(splitPointBlobId)
-                        && !mergedBlobId.equals(splitPointBlobId)) {
+                        && !mergedBlobId.equals(splitPointBlobId)) { // modified in other and HEAD in diff way
                     isConflict = true;
-                    String conflictContent = getConflictContent(currentBlobId, mergedBlobId);
-                    writeContents(join(filePath), conflictContent);
+                    writeContents(join(filePath), getConflictContent(currentBlobId, mergedBlobId));
                     Repository.add(join(filePath).getName());
-                } else if (currentBlobId.equals(splitPointBlobId)) {
-                    // modified in other but not HEAD -> other
+                } else if (currentBlobId.equals(splitPointBlobId)) { // modified in other but not HEAD -> other
                     Blob mergedBlob = Blob.fromFile(mergedBlobId);
                     writeContents(mergedBlob.getFile(), mergedBlob.getContents());
                     stagingArea = getStagingArea();
                     stagingArea.add(mergedBlob.getFile());
                     stagingArea.save();
-                } else {
-                    // modified in HEAD but not other -> HEAD
+                } else { // modified in HEAD but not other -> HEAD
                     Repository.add(join(filePath).getName());
                 }
                 continue;
@@ -455,24 +481,21 @@ public class Repository {
             if (splitPointCommitTracked.containsKey(filePath)) {
                 if (currentHeadCommitTracked.containsKey(filePath)
                         && !mergedHeadCommitTracked.containsKey(filePath)) {
-                    // unmodified in HEAD but not present in other -> REMOVE
                     if (splitPointBlobId.equals(currentBlobId)) {
+                        // unmodified in HEAD but not present in other -> REMOVE
                         Repository.remove(join(filePath).getName());
-                    } else {
-                        // modified in HEAD but removed in other -> conflict
+                    } else { // modified in HEAD but removed in other -> conflict
                         isConflict = true;
-                        String conflictContent = getConflictContent(currentBlobId, mergedBlobId);
-                        writeContents(join(filePath), conflictContent);
+                        writeContents(join(filePath), getConflictContent(currentBlobId, mergedBlobId));
                         Repository.add(join(filePath).getName());
                     }
                     continue;
                 }
                 // unmodified in other but not present in HEAD -> REMAIN REMOVE
-                // modified in other but removed in HEAD -> conflict
                 if (!currentHeadCommitTracked.containsKey(filePath)
                         && mergedHeadCommitTracked.containsKey(filePath)) {
-                    // unmodified in HEAD but not present in other -> REMOVE
                     if (!splitPointBlobId.equals(mergedBlobId)) {
+                        // modified in other but removed in HEAD -> conflict
                         isConflict = true;
                         String conflictContent = getConflictContent(currentBlobId, mergedBlobId);
                         writeContents(join(filePath), conflictContent);
@@ -480,15 +503,15 @@ public class Repository {
                     }
                 }
             } else {
-                // not in split non other but in HEAD -> HEAD
                 if (currentHeadCommitTracked.containsKey(filePath)
                         && !mergedHeadCommitTracked.containsKey(filePath)) {
+                    // not in split non other but in HEAD -> HEAD
                     Repository.add(join(filePath).getName());
                     continue;
                 }
-                // not in split non HEAD but in other -> other
                 if (!currentHeadCommitTracked.containsKey(filePath)
                         && mergedHeadCommitTracked.containsKey(filePath)) {
+                    // not in split non HEAD but in other -> other
                     Blob mergedBlob = Blob.fromFile(mergedBlobId);
                     writeContents(mergedBlob.getFile(), mergedBlob.getContents());
                     stagingArea = getStagingArea();
