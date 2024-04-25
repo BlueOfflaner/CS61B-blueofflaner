@@ -328,14 +328,97 @@ public class Repository {
             exit(FailureMessage.MERGE_MERGED_BRANCH_EQUALS_SPLIT_POINT);
         }
 
+        boolean isConflict = filterNewCommitFiles(currentHeadCommit, mergedHeadCommit, lca);
+
+        String msg = String.format("Merged %s into %s.", mergedBranch, currentBranch);
+        Repository.commit(msg, mergedHeadCommit.getId(), false);
+        // Repository.rmBranch(mergedBranch);
+        if (isConflict) {
+            System.out.println("Encountered a merge conflict.");
+        }
+    }
+
+    private static String getConflictContent(String currentBlobId, String mergedBlobId) {
+        StringBuilder contentBuilder = new StringBuilder();
+        contentBuilder.append("<<<<<<< HEAD").append("\n");
+        if (currentBlobId != null) {
+            Blob currentBlob = Blob.fromFile(currentBlobId);
+            contentBuilder.append(currentBlob.getContentAsString());
+        }
+        contentBuilder.append("=======").append("\n");
+        if (mergedBlobId != null) {
+            Blob mergedBlob = Blob.fromFile(mergedBlobId);
+            contentBuilder.append(mergedBlob.getContentAsString());
+        }
+        contentBuilder.append(">>>>>>>").append("\n");
+        return contentBuilder.toString();
+    }
+
+    /*
+        因为这并不是个树。实际上是个有向无环图，一个结点可能有两个 parent，考虑如下情况
+        a - b - b+c
+             \ /
+              c
+             / \
+        d - e - e+c
+        很明显 c 才是 b+c 和 e+c 两个结点的 split point
+     */
+    private static Commit getLatestCommonAncestorCommit(Commit commitA, Commit commitB) {
+        Comparator<Commit> commitComparator = Comparator.comparing(Commit::getDate).reversed();
+        Queue<Commit> commitsQueue = new PriorityQueue<>(commitComparator);
+        Set<String> checkedCommitIds = new HashSet<>();
+        commitsQueue.add(commitA);
+        while (!commitsQueue.isEmpty()) {
+            Commit latestCommit = commitsQueue.poll();
+            checkedCommitIds.add(latestCommit.getId());
+            List<String> parents = latestCommit.getParents();
+            if (parents.size() > 0) {
+                Commit firstParent = Commit.fromFile(parents.get(0));
+                commitsQueue.add(firstParent);
+            }
+            if (parents.size() > 1) {
+                Commit secondParent = Commit.fromFile(parents.get(1));
+                commitsQueue.add(secondParent);
+            }
+        }
+
+        commitsQueue.add(commitB);
+        while (!commitsQueue.isEmpty()) {
+            Commit latestCommit = commitsQueue.poll();
+            if (checkedCommitIds.contains(latestCommit.getId())) {
+                return latestCommit;
+            }
+            checkedCommitIds.add(latestCommit.getId());
+            List<String> parents = latestCommit.getParents();
+            if (parents.size() > 0) {
+                Commit firstParent = Commit.fromFile(parents.get(0));
+                if (checkedCommitIds.contains(parents.get(0))) {
+                    return firstParent;
+                }
+                commitsQueue.add(firstParent);
+            }
+            if (parents.size() > 1) {
+                Commit secondParent = Commit.fromFile(parents.get(1));
+                if (checkedCommitIds.contains(parents.get(1))) {
+                    return secondParent;
+                }
+                commitsQueue.add(secondParent);
+            }
+        }
+        return null;
+    }
+
+    private static boolean filterNewCommitFiles(Commit currentHeadCommit,
+            Commit mergedHeadCommit, Commit splitPointCommit) {
         Map<String, String> currentHeadCommitTracked = currentHeadCommit.getTracked();
         Map<String, String> mergedHeadCommitTracked = mergedHeadCommit.getTracked();
-        Map<String, String> splitPointCommitTracked = lca.getTracked();
+        Map<String, String> splitPointCommitTracked = splitPointCommit.getTracked();
 
         Set<String> filePaths = new HashSet<>();
         filePaths.addAll(currentHeadCommitTracked.keySet());
         filePaths.addAll(mergedHeadCommitTracked.keySet());
         filePaths.addAll(splitPointCommitTracked.keySet());
+        StagingArea stagingArea;
         boolean isConflict = false;
 
         for (String filePath : filePaths) {
@@ -414,82 +497,7 @@ public class Repository {
                 }
             }
         }
-        String msg = String.format("Merged %s into %s.", mergedBranch, currentBranch);
-        Repository.commit(msg, mergedHeadCommit.getId(), false);
-        // Repository.rmBranch(mergedBranch);
-        if (isConflict) {
-            System.out.println("Encountered a merge conflict.");
-        }
-    }
-
-    private static String getConflictContent(String currentBlobId, String mergedBlobId) {
-        StringBuilder contentBuilder = new StringBuilder();
-        contentBuilder.append("<<<<<<< HEAD").append("\n");
-        if (currentBlobId != null) {
-            Blob currentBlob = Blob.fromFile(currentBlobId);
-            contentBuilder.append(currentBlob.getContentAsString());
-        }
-        contentBuilder.append("=======").append("\n");
-        if (mergedBlobId != null) {
-            Blob mergedBlob = Blob.fromFile(mergedBlobId);
-            contentBuilder.append(mergedBlob.getContentAsString());
-        }
-        contentBuilder.append(">>>>>>>").append("\n");
-        return contentBuilder.toString();
-    }
-
-    /*
-        因为这并不是个树。实际上是个有向无环图，一个结点可能有两个 parent，考虑如下情况
-        a - b - b+c
-             \ /
-              c
-             / \
-        d - e - e+c
-        很明显 c 才是 b+c 和 e+c 两个结点的 split point
-     */
-    private static Commit getLatestCommonAncestorCommit(Commit commitA, Commit commitB) {
-        Comparator<Commit> commitComparator = Comparator.comparing(Commit::getDate).reversed();
-        Queue<Commit> commitsQueue = new PriorityQueue<>(commitComparator);
-        Set<String> checkedCommitIds = new HashSet<>();
-        commitsQueue.add(commitA);
-        while (!commitsQueue.isEmpty()) {
-            Commit latestCommit = commitsQueue.poll();
-            checkedCommitIds.add(latestCommit.getId());
-            List<String> parents = latestCommit.getParents();
-            if (parents.size() > 0) {
-                Commit firstParent = Commit.fromFile(parents.get(0));
-                commitsQueue.add(firstParent);
-            }
-            if (parents.size() > 1) {
-                Commit secondParent = Commit.fromFile(parents.get(1));
-                commitsQueue.add(secondParent);
-            }
-        }
-
-        commitsQueue.add(commitB);
-        while (!commitsQueue.isEmpty()) {
-            Commit latestCommit = commitsQueue.poll();
-            if (checkedCommitIds.contains(latestCommit.getId())) {
-                return latestCommit;
-            }
-            checkedCommitIds.add(latestCommit.getId());
-            List<String> parents = latestCommit.getParents();
-            if (parents.size() > 0) {
-                Commit firstParent = Commit.fromFile(parents.get(0));
-                if (checkedCommitIds.contains(parents.get(0))) {
-                    return firstParent;
-                }
-                commitsQueue.add(firstParent);
-            }
-            if (parents.size() > 1) {
-                Commit secondParent = Commit.fromFile(parents.get(1));
-                if (checkedCommitIds.contains(parents.get(1))) {
-                    return secondParent;
-                }
-                commitsQueue.add(secondParent);
-            }
-        }
-        return null;
+        return isConflict;
     }
 
     private static String getRealCommitId(String commitId) {

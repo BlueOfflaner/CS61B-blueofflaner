@@ -30,8 +30,7 @@ public enum FailureMessage {
     MERGE_BRANCH_NOT_EXIST("A branch with that name does not exist."),
     MERGE_UNCOMMITTED_CHANGES("You have uncommitted changes."),
     MERGE_CURRENT_BRANCH_EQUALS_SPLIT_POINT("Current branch fast-forwarded."),
-    MERGE_MERGED_BRANCH_EQUALS_SPLIT_POINT("Given branch is an ancestor of the current branch."),
-    ;
+    MERGE_MERGED_BRANCH_EQUALS_SPLIT_POINT("Given branch is an ancestor of the current branch.");
 
     final String msg;
 
