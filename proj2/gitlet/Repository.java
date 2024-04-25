@@ -419,37 +419,53 @@ public class Repository {
             Blob mergedBlob = Blob.fromFile(mergedBlobId);
             contentBuilder.append(mergedBlob.getContentAsString());
         }
-        contentBuilder.append(">>>>>>>");
+        contentBuilder.append(">>>>>>>").append("\n");
         return contentBuilder.toString();
     }
 
     private static Commit getLatestCommonAncestorCommit(Commit commitA, Commit commitB) {
         Comparator<Commit> commitComparator = Comparator.comparing(Commit::getDate).reversed();
         Queue<Commit> commitsQueue = new PriorityQueue<>(commitComparator);
-        commitsQueue.add(commitA);
-        commitsQueue.add(commitB);
         Set<String> checkedCommitIds = new HashSet<>();
-        while (true) {
+        commitsQueue.add(commitA);
+        while (!commitsQueue.isEmpty()) {
             Commit latestCommit = commitsQueue.poll();
-            assert latestCommit != null;
-            List<String> parentCommitIds = latestCommit.getParents();
-            String firstParentCommitId = parentCommitIds.get(0);
-            Commit firstParentCommit = Commit.fromFile(firstParentCommitId);
-            if (checkedCommitIds.contains(firstParentCommitId)) {
-                return firstParentCommit;
+            checkedCommitIds.add(latestCommit.getId());
+            List<String> parents = latestCommit.getParents();
+            if (parents.size() > 0) {
+                Commit firstParent = Commit.fromFile(parents.get(0));
+                commitsQueue.add(firstParent);
             }
-            if (parentCommitIds.size() > 1) {
-                Commit secondParentCommit = Commit.fromFile(parentCommitIds.get(1));
-                assert secondParentCommit != null;
-                if (checkedCommitIds.contains(secondParentCommit.getId())) {
-                    return secondParentCommit;
-                }
-                commitsQueue.add(secondParentCommit);
-                checkedCommitIds.add(secondParentCommit.getId());
+            if (parents.size() > 1) {
+                Commit secondParent = Commit.fromFile(parents.get(1));
+                commitsQueue.add(secondParent);
             }
-            commitsQueue.add(firstParentCommit);
-            checkedCommitIds.add(firstParentCommitId);
         }
+
+        commitsQueue.add(commitB);
+        while (!commitsQueue.isEmpty()) {
+            Commit latestCommit = commitsQueue.poll();
+            if (checkedCommitIds.contains(latestCommit.getId())) {
+                return latestCommit;
+            }
+            checkedCommitIds.add(latestCommit.getId());
+            List<String> parents = latestCommit.getParents();
+            if (parents.size() > 0) {
+                Commit firstParent = Commit.fromFile(parents.get(0));
+                if (checkedCommitIds.contains(parents.get(0))) {
+                    return firstParent;
+                }
+                commitsQueue.add(firstParent);
+            }
+            if (parents.size() > 1) {
+                Commit secondParent = Commit.fromFile(parents.get(1));
+                if (checkedCommitIds.contains(parents.get(1))) {
+                    return secondParent;
+                }
+                commitsQueue.add(secondParent);
+            }
+        }
+        return null;
     }
 
     private static String getRealCommitId(String commitId) {
