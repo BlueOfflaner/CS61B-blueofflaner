@@ -7,6 +7,7 @@ import static gitlet.Utils.readObject;
 
 import java.io.File;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 
 public class Blob implements Serializable {
     private String id;
@@ -14,6 +15,7 @@ public class Blob implements Serializable {
     private String filePath;
     private File saveBlobFile;
     private byte[] contents;
+    private static final long serialVersionUID = 1L;
 
     public Blob(File fileName) {
         file = fileName;
@@ -45,6 +47,10 @@ public class Blob implements Serializable {
 
     public byte[] getContents() {
         return contents;
+    }
+
+    public String getContentAsString() {
+        return new String(contents, StandardCharsets.UTF_8);
     }
 
     public static String generatorId(String filePath, byte[] contents) {

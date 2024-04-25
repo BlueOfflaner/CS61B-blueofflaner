@@ -16,11 +16,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -350,14 +353,8 @@ public class Repository {
                 if (!currentBlobId.equals(splitPointBlobId)
                         && !mergedBlobId.equals(splitPointBlobId)) {
                     isConflict = true;
-                    Blob currentBlob = Blob.fromFile(currentBlobId);
-                    Blob mergedBlob = Blob.fromFile(mergedBlobId);
-                    StringBuilder newContents = new StringBuilder();
-                    newContents.append("<<<<<<< HEAD\n")
-                            .append(readContentsAsString(currentBlob.getFile()))
-                            .append("=======\n")
-                            .append(readContentsAsString(mergedBlob.getFile()));
-                    writeContents(currentBlob.getFile(), newContents.toString());
+                    String conflictContent = getConflictContent(currentBlobId, mergedBlobId);
+                    writeContents(join(filePath), conflictContent);
                     Repository.add(join(filePath).getName());
                 } else if (currentBlobId.equals(splitPointBlobId)) {
                     // modified in other but not HEAD -> other
@@ -410,22 +407,49 @@ public class Repository {
         }
     }
 
-    private static Commit getLatestCommonAncestorCommit(Commit c1, Commit c2) {
-        Set<String> ancestors = new HashSet<>();
-        while (c1.getParents().size() > 0) {
-            ancestors.add(c1.getId());
-            c1 = Objects.requireNonNull(Commit.fromFile(c1.getParents().get(0)));
+    private static String getConflictContent(String currentBlobId, String mergedBlobId) {
+        StringBuilder contentBuilder = new StringBuilder();
+        contentBuilder.append("<<<<<<< HEAD").append("\n");
+        if (currentBlobId != null) {
+            Blob currentBlob = Blob.fromFile(currentBlobId);
+            contentBuilder.append(currentBlob.getContentAsString());
         }
-        Commit root = c1;
-        ancestors.add(c1.getId());
+        contentBuilder.append("=======").append("\n");
+        if (mergedBlobId != null) {
+            Blob mergedBlob = Blob.fromFile(mergedBlobId);
+            contentBuilder.append(mergedBlob.getContentAsString());
+        }
+        contentBuilder.append(">>>>>>>");
+        return contentBuilder.toString();
+    }
 
-        while (c2.getParents().size() > 0) {
-            if (ancestors.contains(c2.getId())) {
-                return c2;
+    private static Commit getLatestCommonAncestorCommit(Commit commitA, Commit commitB) {
+        Comparator<Commit> commitComparator = Comparator.comparing(Commit::getDate).reversed();
+        Queue<Commit> commitsQueue = new PriorityQueue<>(commitComparator);
+        commitsQueue.add(commitA);
+        commitsQueue.add(commitB);
+        Set<String> checkedCommitIds = new HashSet<>();
+        while (true) {
+            Commit latestCommit = commitsQueue.poll();
+            assert latestCommit != null;
+            List<String> parentCommitIds = latestCommit.getParents();
+            String firstParentCommitId = parentCommitIds.get(0);
+            Commit firstParentCommit = Commit.fromFile(firstParentCommitId);
+            if (checkedCommitIds.contains(firstParentCommitId)) {
+                return firstParentCommit;
             }
-            c2 = Objects.requireNonNull(Commit.fromFile(c2.getParents().get(0)));
+            if (parentCommitIds.size() > 1) {
+                Commit secondParentCommit = Commit.fromFile(parentCommitIds.get(1));
+                assert secondParentCommit != null;
+                if (checkedCommitIds.contains(secondParentCommit.getId())) {
+                    return secondParentCommit;
+                }
+                commitsQueue.add(secondParentCommit);
+                checkedCommitIds.add(secondParentCommit.getId());
+            }
+            commitsQueue.add(firstParentCommit);
+            checkedCommitIds.add(firstParentCommitId);
         }
-        return root;
     }
 
     private static String getRealCommitId(String commitId) {
