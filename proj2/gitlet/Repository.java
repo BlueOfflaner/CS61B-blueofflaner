@@ -344,7 +344,14 @@ public class Repository {
         StringBuilder stagedThenModifiedBuilder = new StringBuilder();
         Map<String, String> fileMap = getFileMapFromCWD();
         Map<String, String> tracked = getHeadCommit().getTracked();
+        StagingArea stagingArea = getStagingArea();
+        Map<String, String> stagingAreaFilter = new TreeMap<>();
+        stagingAreaFilter.putAll(stagingArea.getAddition());
+        stagingAreaFilter.putAll(stagingArea.getRemoval());
         for (String filePath : tracked.keySet()) {
+            if (stagingAreaFilter.containsKey(filePath)) {
+                continue;
+            }
             if (!fileMap.containsKey(filePath)) {
                 stagedThenModifiedBuilder.append(join(filePath).getName());
                 stagedThenModifiedBuilder.append(" (deleted)");
@@ -362,7 +369,14 @@ public class Repository {
         StringBuilder untrackedBuilder = new StringBuilder();
         List<File> files = getCurrentFiles();
         Map<String, String> tracked = getHeadCommit().getTracked();
+        StagingArea stagingArea = getStagingArea();
+        Map<String, String> stagingAreaFilter = new TreeMap<>();
+        stagingAreaFilter.putAll(stagingArea.getAddition());
+        stagingAreaFilter.putAll(stagingArea.getRemoval());
         for (File file : files) {
+            if (stagingAreaFilter.containsKey(file.getAbsolutePath())) {
+                continue;
+            }
             if (!tracked.containsKey(file.getAbsolutePath())) {
                 untrackedBuilder.append(file.getName());
                 untrackedBuilder.append("\n");
