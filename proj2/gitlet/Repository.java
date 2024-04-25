@@ -376,11 +376,26 @@ public class Repository {
                     if (splitPointBlobId.equals(currentBlobId)) {
                         Repository.remove(join(filePath).getName());
                     } else {
+                        // modified in HEAD but removed in other -> conflict
+                        isConflict = true;
+                        String conflictContent = getConflictContent(currentBlobId, mergedBlobId);
+                        writeContents(join(filePath), conflictContent);
+                        Repository.add(join(filePath).getName());
+                    }
+                    continue;
+                }
+                // unmodified in other but not present in HEAD -> REMAIN REMOVE
+                // modified in other but removed in HEAD -> conflict
+                if (!currentHeadCommitTracked.containsKey(filePath)
+                        && mergedHeadCommitTracked.containsKey(filePath)) {
+                    // unmodified in HEAD but not present in other -> REMOVE
+                    if (!splitPointBlobId.equals(mergedBlobId)) {
+                        isConflict = true;
+                        String conflictContent = getConflictContent(currentBlobId, mergedBlobId);
+                        writeContents(join(filePath), conflictContent);
                         Repository.add(join(filePath).getName());
                     }
                 }
-                // unmodified in other but not present in HEAD -> REMAIN REMOVE
-
             } else {
                 // not in split non other but in HEAD -> HEAD
                 if (currentHeadCommitTracked.containsKey(filePath)
@@ -423,6 +438,15 @@ public class Repository {
         return contentBuilder.toString();
     }
 
+    /*
+        因为这并不是个树。实际上是个有向无环图，一个结点可能有两个 parent，考虑如下情况
+        a - b - b+c
+             \ /
+              c
+             / \
+        d - e - e+c
+        很明显 c 才是 b+c 和 e+c 两个结点的 split point
+     */
     private static Commit getLatestCommonAncestorCommit(Commit commitA, Commit commitB) {
         Comparator<Commit> commitComparator = Comparator.comparing(Commit::getDate).reversed();
         Queue<Commit> commitsQueue = new PriorityQueue<>(commitComparator);
